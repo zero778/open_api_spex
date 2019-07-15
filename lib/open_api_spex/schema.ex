@@ -313,7 +313,7 @@ defmodule OpenApiSpex.Schema do
 
   def cast(%Schema{type: :string, format: :"date-time"}, value, _schemas) when is_binary(value) do
     case DateTime.from_iso8601(value) do
-      {:ok, datetime = %DateTime{}, _offset} -> {:ok, datetime}
+      {:ok, date_time = %DateTime{}, _offset} -> {:ok, date_time}
       error = {:error, _reason} -> error
     end
   end
@@ -849,7 +849,8 @@ defmodule OpenApiSpex.Schema do
   included in the `allOf` list.
   """
   def properties(schema = %Schema{type: :object, properties: properties = %{}}) do
-    Map.keys(properties) ++ properties(%{schema | properties: nil})
+    for({name, property} <- properties, do: {name, default(property)}) ++
+      properties(%{schema | properties: nil})
   end
 
   def properties(%Schema{allOf: schemas}) when is_list(schemas) do
@@ -861,4 +862,7 @@ defmodule OpenApiSpex.Schema do
   end
 
   def properties(_), do: []
+
+  defp default(schema_module) when is_atom(schema_module), do: schema_module.schema().default
+  defp default(%{default: default}), do: default
 end

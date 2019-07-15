@@ -114,7 +114,7 @@ defmodule OpenApiSpex.SchemaTest do
       assert Schema.cast(schema, 123, %{}) === {:ok, 123.0}
     end
 
-    test "Cast string to oneOf number or datetime" do
+    test "Cast string to oneOf number or date-time" do
       schema = %Schema{
         oneOf: [
           %Schema{type: :number},
@@ -125,7 +125,7 @@ defmodule OpenApiSpex.SchemaTest do
       assert {:ok, %DateTime{}} = Schema.cast(schema, "2018-04-01T12:34:56Z", %{})
     end
 
-    test "Cast string to anyOf number or datetime" do
+    test "Cast string to anyOf number or date-time" do
       schema = %Schema{
         oneOf: [
           %Schema{type: :number},
@@ -435,6 +435,26 @@ defmodule OpenApiSpex.SchemaTest do
     test "Validate nullable with unexpected value" do
       schema = %Schema{type: :string, nullable: true}
       assert :ok = Schema.validate(schema, "bla", %{})
+    end
+  end
+
+  describe "Default property value" do
+    test "Available in structure" do
+      size = %Schemas.Size{}
+      assert "cm" == size.unit
+      assert 100 == size.value
+    end
+
+    test "Available after cast" do
+      api_spec = ApiSpec.spec()
+      schemas = api_spec.components.schemas
+      size = Map.fetch!(schemas, "Size")
+
+      assert {:ok, %Schemas.Size{value: 100, unit: "cm"}} ==
+               Schema.cast(size, %{}, schemas)
+
+      assert {:ok, %Schemas.Size{value: 110, unit: "cm"}} ==
+               Schema.cast(size, %{value: 110}, schemas)
     end
   end
 end
